@@ -5,8 +5,139 @@
 #include <assert.h>
 #include <math.h>
 //#include "check_syscalls.h"
-#include "inthash.h"
+#include <inttypes.h>
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+/*
+  hashing code from Peter Behroozi
+  lifted under GPL 
+  some of the system calls have been switched back
+  to standard versions
+ */
+
+#define IH_INVALID INT64_MAX
+#define IH_DELETED (INT64_MAX-1)
+#define IH_SKIP (INT64_MAX-2)
+
+struct intbucket {
+  int64_t key;
+  void *data;
+};
+
+struct inthash {
+  uint64_t hashwidth, elems, num_buckets, hashnum;
+  struct intbucket *buckets;
+};
+
+struct inthash *new_inthash(void);
+static int64_t *ih_keylist(struct inthash *ih);
+static void *ih_getval(struct inthash *ih, int64_t key);
+static void ih_setval(struct inthash *ih, int64_t key, void *data);
+static void ih_delval(struct inthash *ih, int64_t key);
+static void free_inthash(struct inthash *ih);
+static void ih_prealloc(struct inthash *ih, int64_t size);
+
+static void free_inthash2(struct inthash *ih);
+static void ih_setval2(struct inthash *ih, int64_t key1, int64_t key2, void *data);
+static void *ih_getval2(struct inthash *ih, int64_t key1, int64_t key2);
+static void ih_setint64(struct inthash *ih, int64_t key, int64_t value);
+static int64_t ih_getint64(struct inthash *ih, int64_t key);
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// actual memory prof.
+static struct inthash *MemHash = NULL;
+static int64_t MaxMem = 0;
+static int64_t CurrMem = 0;
+static int PrintHighWater = 1;
+
+void falcon_cleanup(void) {
+  MaxMem = 0;
+  CurrMem = 0;
+  free_inthash(MemHash);
+}
+
+void falcon_print_on(void) {
+  PrintHighWater = 1;
+}
+
+void falcon_print_off(void) {
+  PrintHighWater = 0;
+}
+
+void falcon_setmem(void *p, int64_t num) {
+  if(p == NULL) return;
+
+  if(MemHash == NULL) MemHash = new_inthash();
+
+  ih_setint64(MemHash,(int64_t) p,num);
+  CurrMem += num;
+  if(CurrMem > MaxMem) {
+    if(PrintHighWater) {
+      fprintf(stderr,"mem high water: %lld bytes\n",CurrMem);
+      fflush(stderr);
+    }
+    
+    MaxMem = CurrMem;
+  }
+}
+
+void falcon_print_memuse(void) {
+  fprintf(stderr,"mem usage: %lld bytes\n",CurrMem);
+  fflush(stderr);
+}
+
+void falcon_print_highwater(void) {
+  fprintf(stderr,"mem usage: %lld bytes\n",MaxMem);
+  fflush(stderr);
+}
+
+long falcon_memuse(void) {
+  return CurrMem;
+}
+
+long falcon_highwater(void) {
+  return MaxMem;
+}
+
+void falcon_unsetmem(void *p) {
+  if(p == NULL) return;
+
+  if(MemHash == NULL) MemHash = new_inthash();
+  
+  int64_t num = ih_getint64(MemHash,(int64_t) p);
+  CurrMem -= num;
+  ih_delval(MemHash,(int64_t) p);
+}
+
+void *falcon_realloc(void *p, size_t num) {
+  falcon_unsetmem(p);
+  void *pnew = realloc(p,num);
+  falcon_setmem(pnew,num);
+  return pnew;
+}
+
+void *falcon_calloc(size_t num, size_t size) {
+  void *p = calloc(num,size);
+  falcon_setmem(p,num*size);
+  return p;
+}
+
+void *falcon_malloc(size_t num) {
+  void *p = malloc(num);
+  falcon_setmem(p,num);
+  return p;
+}
+
+void falcon_free(void *p) {
+  falcon_unsetmem(p);
+  free(p);  
+  return;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 /*
   hashing code from Peter Behroozi
   lifted under GPL 
@@ -197,3 +328,8 @@ void *ih_getval2(struct inthash *ih, int64_t key1, int64_t key2) {
   if (!ih2) return NULL;
   return ih_getval(ih2, key2);
 }
+
+#undef IH_INVALID
+#undef IH_DELETED
+#undef IH_SKIP
+#undef MAX_LOAD_FACTOR
