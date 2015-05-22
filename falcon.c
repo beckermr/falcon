@@ -29,7 +29,7 @@ struct inthash {
   struct intbucket *buckets;
 };
 
-struct inthash *new_inthash(void);
+static struct inthash *new_inthash(void);
 static int64_t *ih_keylist(struct inthash *ih);
 static void *ih_getval(struct inthash *ih, int64_t key);
 static void ih_setval(struct inthash *ih, int64_t key, void *data);
@@ -188,11 +188,11 @@ int64_t *ih_keylist(struct inthash *ih) {
 }
 
 
-inline uint64_t _ih_hash_function(struct inthash *ih, uint64_t key) {
+static inline uint64_t _ih_hash_function(struct inthash *ih, uint64_t key) {
   return ((key*ih->hashnum)>>(64 - ih->hashwidth));
 }
 
-void _ih_add_more_buckets(struct inthash *ih, int64_t add_factor) {
+static void _ih_add_more_buckets(struct inthash *ih, int64_t add_factor) {
   int64_t i;
   int64_t old_num_buckets = ih->num_buckets;
   struct intbucket *new_buckets, *ib, *newb;
@@ -225,14 +225,14 @@ void _ih_add_more_buckets(struct inthash *ih, int64_t add_factor) {
 }
 
 
-void ih_prealloc(struct inthash *ih, int64_t size) {
+static void ih_prealloc(struct inthash *ih, int64_t size) {
   if (size <= 0) return;
   int64_t numbits = ceil(log(size/MAX_LOAD_FACTOR)/log(2));
   if (numbits <= ih->hashwidth) return;
   _ih_add_more_buckets(ih, numbits-ih->hashwidth);
 }
 
-inline struct intbucket *_ih_getval(struct inthash *ih, int64_t key) {
+static inline struct intbucket *_ih_getval(struct inthash *ih, int64_t key) {
   struct intbucket *ib = ih->buckets + _ih_hash_function(ih, key);
   int64_t key2 = key;
   while (ib->key!=IH_INVALID) {
@@ -243,7 +243,7 @@ inline struct intbucket *_ih_getval(struct inthash *ih, int64_t key) {
   return ib;
 }
 
-inline struct intbucket *_ih_getval_deleted(struct inthash *ih, int64_t key) {
+static inline struct intbucket *_ih_getval_deleted(struct inthash *ih, int64_t key) {
   struct intbucket *ib = ih->buckets + _ih_hash_function(ih, key);
   struct intbucket *ib_del = NULL;
   int64_t key2 = key;
