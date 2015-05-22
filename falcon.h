@@ -1,6 +1,7 @@
 #ifndef _FALCON_
 #define _FALCON_
 
+#ifdef FALCON
 void falcon_print_on(void);
 void falcon_print_off(void);
 void falcon_print_memuse(void);
@@ -21,6 +22,7 @@ void falcon_free(void *p);
 #define calloc falcon_calloc
 #define malloc falcon_malloc
 #define free falcon_free
-  
+#endif
+
 #endif /* _FALCON_ */
 
