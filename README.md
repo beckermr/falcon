@@ -1,6 +1,6 @@
 falcon
 ======
-a light-weight memory debugging tool
+a light-weight memory profiler
 
 Usage
 -----
