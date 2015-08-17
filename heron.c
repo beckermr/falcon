@@ -51,21 +51,21 @@ static int64_t MaxMem = 0;
 static int64_t CurrMem = 0;
 static int PrintHighWater = 1;
 
-void falcon_cleanup(void) {
+void heron_cleanup(void) {
   MaxMem = 0;
   CurrMem = 0;
   free_inthash(MemHash);
 }
 
-void falcon_print_on(void) {
+void heron_print_on(void) {
   PrintHighWater = 1;
 }
 
-void falcon_print_off(void) {
+void heron_print_off(void) {
   PrintHighWater = 0;
 }
 
-void falcon_setmem(void *p, int64_t num) {
+void heron_setmem(void *p, int64_t num) {
   if(p == NULL) return;
 
   if(MemHash == NULL) MemHash = new_inthash();
@@ -82,25 +82,25 @@ void falcon_setmem(void *p, int64_t num) {
   }
 }
 
-void falcon_print_memuse(void) {
+void heron_print_memuse(void) {
   fprintf(stderr,"mem usage: %lld bytes\n",CurrMem);
   fflush(stderr);
 }
 
-void falcon_print_highwater(void) {
+void heron_print_highwater(void) {
   fprintf(stderr,"mem usage: %lld bytes\n",MaxMem);
   fflush(stderr);
 }
 
-long falcon_memuse(void) {
+long heron_memuse(void) {
   return CurrMem;
 }
 
-long falcon_highwater(void) {
+long heron_highwater(void) {
   return MaxMem;
 }
 
-void falcon_unsetmem(void *p) {
+void heron_unsetmem(void *p) {
   if(p == NULL) return;
 
   if(MemHash == NULL) MemHash = new_inthash();
@@ -110,27 +110,27 @@ void falcon_unsetmem(void *p) {
   ih_delval(MemHash,(int64_t) p);
 }
 
-void *falcon_realloc(void *p, size_t num) {
-  falcon_unsetmem(p);
+void *heron_realloc(void *p, size_t num) {
+  heron_unsetmem(p);
   void *pnew = realloc(p,num);
-  falcon_setmem(pnew,num);
+  heron_setmem(pnew,num);
   return pnew;
 }
 
-void *falcon_calloc(size_t num, size_t size) {
+void *heron_calloc(size_t num, size_t size) {
   void *p = calloc(num,size);
-  falcon_setmem(p,num*size);
+  heron_setmem(p,num*size);
   return p;
 }
 
-void *falcon_malloc(size_t num) {
+void *heron_malloc(size_t num) {
   void *p = malloc(num);
-  falcon_setmem(p,num);
+  heron_setmem(p,num);
   return p;
 }
 
-void falcon_free(void *p) {
-  falcon_unsetmem(p);
+void heron_free(void *p) {
+  heron_unsetmem(p);
   free(p);  
   return;
 }
