@@ -5,13 +5,13 @@ CLINK=$(CC)
 CFLAGS=$(OPTIMIZE)
 CLIB=
 
-EXEC = test_falcon
+EXEC = test_heron
 check: $(EXEC) 
 
-OBJS1= main.o falcon.o
+OBJS1= main.o heron.o
 $(EXEC): $(OBJS1)
 	$(CLINK) $(CFLAGS) -o $@ $(OBJS1) $(CLIB)
-	./test_falcon
+	./test_heron
 
 .PHONY : clean
 clean: 
